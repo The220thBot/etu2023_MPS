@@ -36,38 +36,35 @@ sudo apt install dosbox winetricks
 Запустите скрипт `start.sh` (его можно запускать в любой директории):
 
 ``` bash
-bash start.sh
+bash start.sh # menu item "Init prefix"
 ```
 
-В меню выбирите пункт `Init prefix`. Предложат установить `Wine Mono Installer`, отклоните. Подождите чуть-чуть. Далее выбирите Windows Version: `Windows XP`. Закройте окошко.
+В меню выберите пункт `Init prefix`. Предложат установить `Wine Mono Installer`, отклоните. Подождите чуть-чуть. Далее выберите Windows Version: `Windows XP`. Закройте окошко.
 
 ## Запуск эмулятора
 
-Запустите скрипт, выбирите пункт `Run ADSIM812.EXE`.
+Запустите скрипт, выберите пункт `Run ADSIM812.EXE`:
 
 ``` bash
-bash start.sh
+bash start.sh # menu item "Run ADSIM812.EXE"
 ```
 
 ## Компиляция файла
 
 Скопируйте ваш код в файл `./work/code.asm`.
 
-Запустите скрипт, выбирите пункт `Compile ./work/code.asm`.
+Запустите скрипт, выберите пункт `Compile ./work/code.asm`.
 
 ``` bash
-bash start.sh
+bash start.sh # menu item "Compile ./work/code.asm"
 ```
 
-Компилироваться будет ТОЛЬКО файл `./work/code.asm`!
+Компилироваться будет **ТОЛЬКО** файл `./work/code.asm`!
 
-Если ошибок нет, то в файле `./work/TEST.LST` можно найти строку `VERSION 1.2h ASSEMBLY COMPLETE, 0 ERRORS FOUND`:
+Если ошибок нет, то в файле `./work/CODE.LST` можно найти строку `VERSION 1.2h ASSEMBLY COMPLETE, 0 ERRORS FOUND`:
 
 ``` bash
-cat $HOME/shit/pfx/drive_c/shit/work/TEST.LST
-
-# look line:
-#      "VERSION 1.2h ASSEMBLY COMPLETE, 0 ERRORS FOUND"
+bash start.sh # menu item "Check ./work/CODE.LST"
 ```
 
-Иначе есть ошибки, смотри файл `./work/TEST.LST` полностью. Удачи.
+Иначе есть ошибки, смотри файл `./work/CODE.LST` полностью. Удачи.
