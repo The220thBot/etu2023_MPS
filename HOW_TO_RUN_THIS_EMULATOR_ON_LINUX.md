@@ -31,7 +31,7 @@ sudo apt install dosbox winetricks
 
 ## Инициализация
 
-Скачайте [`ADUC.zip`](https://github.com/The220thBot/etu2023_MPS/raw/main/ADUC.zip) и разорхивируйте куда-нибудь.
+Скачайте [`ADUC.zip`](https://github.com/The220thBot/etu2023_MPS/raw/main/ADUC.zip) и разархивируйте куда-нибудь.
 
 Запустите скрипт `start.sh` (его можно запускать в любой директории):
 
