@@ -1,4 +1,4 @@
-# Install
+# Установка wine
 
 Установите `wine`.
 
@@ -20,115 +20,48 @@ sudo apt-key add winehq.key
 sudo apt-add-repository 'https://dl.winehq.org/wine-builds/ubuntu/'
 sudo apt update
 sudo apt install --install-recommends winehq-staging
-sudo apt install winetricks
+sudo apt install dosbox winetricks
 ```
 
 [См. тут](https://www.gloriouseggroll.tv/how-to-get-out-of-wine-dependency-hell/) более подробно или для других дистрибутивов.
 
-# Configure
 
-Создайте папку `$HOME/shit`.
 
-Разорхивируйте `ADUC.zip` в папку: `$HOME/shit`.
+# Запуск всего этого вот
 
-Создайте папку `$HOME/shit/pfx`.
+## Инициализация
 
-Запустите:
+Разорхивируйте `ADUC.zip` куда-нибудь.
 
-``` bash
-WINEPREFIX=$HOME/shit/pfx WINEARCH="win32" winecfg
-```
-
-Предложат установить `Wine Mono Installer`, отклоните. Далее выбирите Windows Version: `Windows XP`.
-
-Закройте `winecfg`.
-
-Создайте папку: `$HOME/shit/pfx/drive_c/shit`.
-
-Выполните команды:
+Запустите скрипт `start.sh` (его можно запускать в любой директории):
 
 ``` bash
-cp -r $HOME/shit/ADUC/ADSIM812/ $HOME/shit/pfx/drive_c/shit
-cp -r $HOME/shit/ADUC/ASM51/ $HOME/shit/pfx/drive_c/shit
-mkdir $HOME/shit/pfx/drive_c/shit/work
-cp $HOME/shit/ADUC/TEST/MOD* $HOME/shit/pfx/drive_c/shit/work
-# Возможно что-то ещё надо
+bash start.sh
 ```
 
-# Запуск эмулятора ADSIM812.EXE
+В меню выбирите пункт `Init prefix`. Предложат установить `Wine Mono Installer`, отклоните. Подождите чуть-чуть. Далее выбирите Windows Version: `Windows XP`. Закройте окошко.
 
-Попробуйте запустить:
+## Запуск эмулятора
+
+Запустите скрипт, выбирите пункт `Run ADSIM812.EXE`.
 
 ``` bash
-cd "$HOME/shit/pfx/drive_c/shit/work"
-WINEPREFIX=$HOME/shit/pfx WINEARCH="win32" wine "$HOME/shit/pfx/drive_c/shit/ADSIM812/ADSIM812.EXE"
+bash start.sh
 ```
 
-Если получилось, то переходим дальше, иначе пробуем дебажить, иначе ставим Windows XP на виртуалку.
+## Компиляция файла
 
-# Компиляция
+Скопируйте ваш код в файл `./work/code.asm`.
 
-Создайте тестовый файл `$HOME/shit/pfx/drive_c/shit/work/test.asm`:
-
-``` asm
-$mod52
-
-	ORG 0h
-M1:
-        MOV 	DPTR, #init
-	MOV 	R0, #8
-	MOV 	R1, #20h
-LOOP:
-	MOV 	A, #0
-	MOVC 	A, @A+DPTR
-	MOV 	@R1, A
-	INC 	DPTR
-	INC 	R1
-	DJNZ 	R0,LOOP
-	JMP 	M1
-
-	ORG 1000h
-init:
-	DB 1,2,3,4,5,6,7,8
-	END
-```
-
-## Тихая без интерактива
-
-Создайте скрипт `$HOME/shit/start.sh` со следующим содержимым:
+Запустите скрипт, выбирите пункт `Compile ./work/code.asm`.
 
 ``` bash
-#!/bin/bash
-export LABFILE=test.asm
-cp "$HOME/shit/pfx/drive_c/shit/work/$LABFILE" "$HOME/shit/pfx/drive_c/shit/ASM51/$LABFILE"
-cd "$HOME/shit/pfx/drive_c/shit/ASM51"
-WINEPREFIX=$HOME/shit/pfx WINEARCH="win32" wine ASM51.EXE $LABFILE
-export LABFILE_NAME="${LABFILE%.*}"
-export LABFILE_BIG_NAME=${LABFILE_NAME^^}
-cp $LABFILE_BIG_NAME.??? ../work
-# В папке work будут "TEST.HEX" и "TEST.LST" файлы.
-echo "Look $LABFILE_BIG_NAME.HEX and $LABFILE_BIG_NAME.LST in $HOME/shit/pfx/drive_c/shit/work/"
-export COMPILE_RES=$(cat $HOME/shit/pfx/drive_c/shit/work/$LABFILE_BIG_NAME.LST | grep "0 ERRORS FOUND")
-if [ -z "$COMPILE_RES" ]
-then
-      echo "!!!Error while compile!!!"
-      echo "Content of $LABFILE_BIG_NAME.LST:"
-      echo "\"\"\""
-      echo $(cat $HOME/shit/pfx/drive_c/shit/work/$LABFILE_BIG_NAME.LST)
-      echo "\"\"\""
-      echo "Compilled: ERROR"
-else
-      echo "Compilled: OK"
-fi
+bash start.sh
 ```
 
-Чтобы скомпилировать положите в папку `$HOME/shit/pfx/drive_c/shit/work/` файл `test.asm` (или другой, поменяйте строку `export LABFILE=test.asm`, как необходимо, в скрипте выше). И запустите:
+Компилироваться будет ТОЛЬКО файл `./work/code.asm`!
 
-``` bash
-bash $HOME/shit/start.sh
-```
-
-Если ошибок нет, то в файле `$HOME/shit/pfx/drive_c/shit/work/TEST.LST` можно найти строку `VERSION 1.2h ASSEMBLY COMPLETE, 0 ERRORS FOUND`:
+Если ошибок нет, то в файле `./work/TEST.LST` можно найти строку `VERSION 1.2h ASSEMBLY COMPLETE, 0 ERRORS FOUND`:
 
 ``` bash
 cat $HOME/shit/pfx/drive_c/shit/work/TEST.LST
@@ -137,4 +70,4 @@ cat $HOME/shit/pfx/drive_c/shit/work/TEST.LST
 #      "VERSION 1.2h ASSEMBLY COMPLETE, 0 ERRORS FOUND"
 ```
 
-Иначе есть ошибки, смотри файл `$HOME/shit/pfx/drive_c/shit/work/TEST.LST` полностью.
+Иначе есть ошибки, смотри файл `./work/TEST.LST` полностью. Удачи.
