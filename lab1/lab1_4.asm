@@ -67,6 +67,7 @@ MAIN:
     ;    0         1       00
     ;    1         0       00
     ;    1         1       10
+    CLR PSW.7 ; C - carry flag
     MOV A, R0
     SUBB A, R5
     JNZ MAIN_P00 ; R0 != R5 <-> Q_min != x_cp
@@ -109,6 +110,7 @@ F_ADDER:
 
     RET
 
+; HE nPOWE 6blJlO YMHO)l(uTb Q_min u Q_max HA 10?!?!
 F_DEVIDER:
     ; Целочисленное деление R2R3 на R4 в R5
     ;             Если остаток от деления равен 0, то R6=0
