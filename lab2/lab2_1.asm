@@ -3,27 +3,38 @@ $mod52
 ORG 0h
 
 MAIN:
-    MOV C,P0.0
-    ANL C,/P0.1
-    
-    MOV 0E0H, C
-    
-    MOV C,P0.3
-    ANL C,/P0.2
+	MOV		A,P0
+	MOV		R0,A
+	RR		A
+	MOV		R1,A
+	RR		A
+	MOV		R2,A
+	RR		A
+	MOV		R3,A
 
-    ORL C, 0E0H
+	MOV 	A, R2
+	CPL 	A
+	ANL		A, R3
+	MOV		R4, A
 
-    JC RESULT1
-    JMP RESULT0
+	MOV		A, R1
+	CPL		A
+	ANL		A, R0
+
+	ORL		A, R4
+
+	RRC		A
+	JC		RESULT1
+	JMP		RESULT0
 
 RESULT1:
-    MOV P1, #0FFh
-    JMP FINAL
+	MOV P1, #0FFh
+	JMP FINAL
 
 RESULT0:
-    MOV P1, #0h
+	MOV P1, #0h
 
 FINAL:
-    JMP MAIN
+	JMP MAIN
 
 END
