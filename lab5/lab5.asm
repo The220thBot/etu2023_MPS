@@ -28,7 +28,7 @@ INPUT:
     MOVX @DPTR, A
     MOV DPL, A
     MOV A, SBUF
-    MOV SBUF, A
+    ;MOV SBUF, A
     MOVX @DPTR, A
     MOV DPL, #0h
     CLR A
@@ -40,7 +40,22 @@ OUTPUT:
     ; если нет TI выходим
     JNB TI, DONE
 
-    MOV SBUF, #'!'
+    MOVX A, @DPTR
+    MOV R0, A
+    MOV DPTR, #1h
+
+; цикл для вывода данных
+OUTPUT_ROUTINE:
+    MOV A, #0
+    MOVX A, @DPTR
+	MOV SBUF, A
+	INC DPTR
+	DJNZ R0, OUTPUT_ROUTINE
+
+
+    MOV R0, 0
+    CLR A
+    MOV DPTR, #0000H
 
     ; очищаем флаг прерывания RI
     CLR TI
