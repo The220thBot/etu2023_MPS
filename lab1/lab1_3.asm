@@ -20,7 +20,7 @@ START:
     MOV TH1, #083h
     MOV TL1, #77h
 
-    CLR PSW.3
+    SETB PSW.3
     CLR PSW.4
     MOV R0, #18h   ; Банк 0
 
