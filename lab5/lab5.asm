@@ -85,8 +85,7 @@ INIT:
     ; настройка serial порта (ri и ti очищены)
     MOV SCON, #01010000b
 
-    MOV A, #0h
-    MOVX @DPTR, A
+    MOV DPTR, #0h
     CLR A
 
     ; запускаем таймер 1
