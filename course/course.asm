@@ -87,7 +87,7 @@ INIT:
         MOV		RCAP2H, #0FFh
         MOV		TL2, #0A4h		; обнуляем счетчик 2
         MOV		TH2, #0FFh		; то, что будет загружаться в TL2 при перезаполнении
-        MOV		10h, #10h		; кол-во чисел (+1, т.к. DJNZ "упустит" последнее число)
+        MOV		20h, #10h		; кол-во чисел (+1, т.к. DJNZ "упустит" последнее число)
         SETB	TR2				; старт для таймера 2
         MOV		DPH, #0h
         MOV		DPL, #0h
@@ -116,7 +116,6 @@ MAIN:
 
         JC SENSORS_RESULT1    ; переход, если перенос равен единице. 
                                 ; Если там 0, то и сбрасывать не надо, верно?)
-        JMP SENSORS_RESULT0
 
 SENSORS_RESULT0:
     CLR SENSOR_OUT
@@ -174,7 +173,10 @@ ORG 0170h
 ; прерывания serial port
 INTERRUPT_LAB5:
     ; сохраняем контекст и флаги
+    PUSH 0
     PUSH PSW
+    PUSH DPL
+    PUSH DPH
 
     ; проверяем готовность устройств
     JNB P3.4, DONE
@@ -224,11 +226,14 @@ OUTPUT_ROUTINE:
     
 DONE:
     ; восстанавливаем флаги и возврат
+    PUSH DPH
+    PUSH DPL
     POP PSW
+    POP 0
     RETI
 
 ADCINT:
-	DJNZ	10h, NEXT	; считываем все 15 чисел по одному на прерывание, записываем в External Memory
+	DJNZ	20h, NEXT	; считываем все 15 чисел по одному на прерывание, записываем в External Memory
 	CLR		TR2			; стопаем таймер
 	JMP	LAB1_4			; выполняем алгоритм из лаб1_4
 
@@ -339,9 +344,14 @@ LAB1_4:
 
     MAIN_P00:
     MOV P2, #HEAT
-    JMP KEKE
 
     KEKE:
+    MOV		20h, #10h		; кол-во чисел (+1, т.к. DJNZ "упустит" последнее число)
+    MOV		DPH, #0h
+	MOV		DPL, #0h	; в нулевой ячейке держим кол-во чисел в памяти
+    MOV     A, #0h
+	MOVX	@DPTR,A
+
 	POP	DPL
 	POP	DPH
 	POP	PSW
