@@ -17,9 +17,11 @@ Q_MIN EQU 50h
 Q_MIN_ADDR EQU 21h
 Q_MAX EQU 70h
 Q_MAX_ADDR EQU 22h
-HEAT EQU 00h
+; Вывод
+HEAT EQU 0h
 COOL EQU 3h
 NOTHING_TO_DO EQU 2h
+BUSY_BIT EQU P0.5
 
 ; UART
 NUM_OF_NUMS_ADDR EQU 50h
@@ -68,6 +70,8 @@ INIT:
         ; T/C0 по TF0 (переполнение) + INT0 (последние 2 бита)
         MOV IE, #11010011b
 
+        MOV IP, #00010011b ; делаем приоритет у UART, Timer0 INT0
+
     INIT_LAB4:
         ; Пункт 2
         MOV TL0, #0h            ; обнуляем счетчик
@@ -95,6 +99,7 @@ INIT:
         MOV		Q_MIN_ADDR, #Q_MIN		; q_min tyt
         MOV	    Q_MAX_ADDR, #Q_MAX		; q_max tyt
 	    CLR		A
+        CLR     BUSY_BIT
 
 MAIN:   ; снимаем данные с счетчика
     LCALL OUT_REGS_LAB1
@@ -212,6 +217,7 @@ OUTPUT_ROUTINE:
 	INC R1
 	DJNZ R0, OUTPUT_ROUTINE
 
+    MOV NUM_OF_NUMS_ADDR, #0h ; "очистка" вывода
     MOV R0, 0
     CLR A
 
@@ -266,6 +272,7 @@ NEXT:
 ORG 0205h
 
 LAB1_4:
+    SETB BUSY_BIT
 	; сохраняем состояния регистров до работы
 	PUSH	0
 	PUSH	1
@@ -312,7 +319,7 @@ LAB1_4:
     MOV R4, A ; кол-во чисел
     LCALL F_DEVIDER ; В R5 среднее значение, в R6 есть ли остаток
 
-	XCH     A, Q_MIN_ADDR
+    XCH     A, Q_MIN_ADDR
     MOV R0, A
     XCH     A, Q_MIN_ADDR
 
@@ -373,6 +380,7 @@ LAB1_4:
 	POP	0
 
     SETB TR2
+    CLR BUSY_BIT
     RETI
 
 ; https://what-when-how.com/8051-microcontroller/8051-call-instructions/
