@@ -14,16 +14,15 @@ CURRENT_LAMPOCHKA EQU 31h
 
 ; Пункт 5
 Q_MIN EQU 50h
-Q_MIN_ADDR EQU 70h
+Q_MIN_ADDR EQU 21h
 Q_MAX EQU 70h
-Q_MAX_ADDR EQU 71h
+Q_MAX_ADDR EQU 22h
 HEAT EQU 00h
 COOL EQU 3h
 NOTHING_TO_DO EQU 2h
 
-; СТОП/РЕСЕТ
-STOP_BIT EQU P0.5
-RESET_BIT EQU P0.4
+; UART
+NUM_OF_NUMS_ADDR EQU 50h
 
 ORG	0h
     JMP INIT
@@ -93,29 +92,24 @@ INIT:
         MOV		DPL, #0h
 
         ; ниже просто записываем Q_min и Q_max в External Memory. Или это тоже надо как-то через АЦП вход?
-        MOV		DPL, #Q_MIN_ADDR
-        MOV		A, #Q_MIN		; q_min tyt
-        MOVX	@DPTR, A
-        MOV		DPL, #Q_MAX_ADDR
-        MOV		A, #Q_MAX		; q_max tyt
-        MOVX	@DPTR, A
+        MOV		Q_MIN_ADDR, #Q_MIN		; q_min tyt
+        MOV	    Q_MAX_ADDR, #Q_MAX		; q_max tyt
 	    CLR		A
 
-MAIN:
-    SENSOR_PROCESS_OPTION1:
-        LCALL OUT_REGS_LAB1
-        MOV C, SENSOR_X1 ; пересылка бита в перенос
-        ANL C, /SENSOR_X2 ; логическое И инверсии бита и переноса
-        
-        MOV 0E0H, C ; пересылка переноса в бит аккумулятора
-        
-        MOV C,SENSOR_X4 ; пересылка бита в перенос
-        ANL C,/SENSOR_X3 ; логическое И инверсии бита и переноса
+MAIN:   ; снимаем данные с счетчика
+    LCALL OUT_REGS_LAB1
+    MOV C, SENSOR_X1 ; пересылка бита в перенос
+    ANL C, /SENSOR_X2 ; логическое И инверсии бита и переноса
+    
+    MOV 0E0H, C ; пересылка переноса в бит аккумулятора
+    
+    MOV C,SENSOR_X4 ; пересылка бита в перенос
+    ANL C,/SENSOR_X3 ; логическое И инверсии бита и переноса
 
-        ORL C, 0E0H ; логическое ИЛИ бита и переноса
+    ORL C, 0E0H ; логическое ИЛИ бита и переноса
 
-        JC SENSORS_RESULT1    ; переход, если перенос равен единице. 
-                                ; Если там 0, то и сбрасывать не надо, верно?)
+    JC SENSORS_RESULT1    ; переход, если перенос равен единице. 
+                            ; Если там 0, то и сбрасывать не надо, верно?)
 
 SENSORS_RESULT0:
     CLR SENSOR_OUT
@@ -174,9 +168,10 @@ ORG 0170h
 INTERRUPT_LAB5:
     ; сохраняем контекст и флаги
     PUSH 0
+    PUSH 1
+    PUSH 2
     PUSH PSW
-    PUSH DPL
-    PUSH DPH
+    PUSH ACC
 
     ; проверяем готовность устройств
     JNB P3.4, DONE
@@ -187,14 +182,14 @@ INTERRUPT_LAB5:
 
 INPUT:
     ; пересылаем данные в память
-    MOVX A, @DPTR
+    MOV A, NUM_OF_NUMS_ADDR ; Сколько у нас символов
     INC A
-    MOVX @DPTR, A
-    MOV DPL, A
+    MOV NUM_OF_NUMS_ADDR, A
+    ADD A, #NUM_OF_NUMS_ADDR
+    MOV R0, A ; В ячейку записать
     MOV A, SBUF
-    ;MOV SBUF, A
-    MOVX @DPTR, A
-    MOV DPL, #0h
+
+    MOV @R0, A  ; Записываем считанное значение
     CLR A
     
     ; очищаем флаг прерывания RI
@@ -204,31 +199,31 @@ OUTPUT:
     ; если нет TI выходим
     JNB TI, DONE
 
-    MOVX A, @DPTR
+    MOV A, NUM_OF_NUMS_ADDR
     MOV R0, A
-    MOV DPTR, #1h
+    MOV R1, #NUM_OF_NUMS_ADDR
+    INC R1
 
 ; цикл для вывода данных
 OUTPUT_ROUTINE:
     MOV A, #0
-    MOVX A, @DPTR
+    MOV A, @R1
 	MOV SBUF, A
-	INC DPTR
+	INC R1
 	DJNZ R0, OUTPUT_ROUTINE
-
 
     MOV R0, 0
     CLR A
-    MOV DPTR, #0000H
 
     ; очищаем флаг прерывания RI
     CLR TI
     
 DONE:
     ; восстанавливаем флаги и возврат
-    PUSH DPH
-    PUSH DPL
+    POP ACC
     POP PSW
+    POP 2
+    POP 1
     POP 0
     RETI
 
@@ -241,16 +236,28 @@ NEXT:
 	PUSH	ACC
 	PUSH	DPH
 	PUSH	DPL			; сохраняем текущий DPTR
+    PUSH    0
+    PUSH    PSW
+
 	MOV		DPH, #0h
 	MOV		DPL, #0h	; в нулевой ячейке держим кол-во чисел в памяти
-	MOVX	A, @DPTR	; берем из нулевой ячейки значение
+
+	MOV	    A, 40h	    ; берем из ячейки значение, сколько у нас чисел
 	INC		A
-	MOVX	@DPTR,A		; +1 записываем обратно
+	MOV	    40h, A		; +1 записываем обратно
 	MOV		DPL, A		; дальше записываем число в "массив"
+    MOV     R0, A
+    MOV     A, #40h
+    ADD     A, R0
+    MOV     R0, A
+
 	MOV		A, #0h
-	MOVX	@DPTR,A
+	MOV	    @R0, A
 	MOV		A, ADCDATAL
-	MOVX	@DPTR,A
+	MOV	    @R0,A
+
+    POP     PSW
+    POP     0
 	POP		DPL
 	POP		DPH
 	POP		ACC
@@ -273,17 +280,19 @@ LAB1_4:
 	PUSH	DPL
 
 	MOV		DPH, #0h
-	MOV		DPL, #0h
+	MOV		DPL, #40h
 
 	; ниже работа 1 пункт 4, добавлено только получение кол-ва чисел, диапазон из External Memory
-	MOVX A, @DPTR
+	MOV A, #0h
+	MOVC A, @A + DPTR
 	MOV R0, A
 	INC	DPTR
     MOV R2, #0h
     MOV R3, #0h
 
 	MAIN_LOOP:
-        MOVX A, @DPTR
+        MOV A, #0h
+	    MOVC A, @A + DPTR
         INC DPTR
 
         MOV R4, A
@@ -297,17 +306,19 @@ LAB1_4:
         DJNZ R0, MAIN_LOOP
 
 	MOV	DPH, #0h
-	MOV	DPL, #0h	; в нулевой ячейке держим кол-во чисел в памяти
-	MOVX A, @DPTR
+	MOV	DPL, #40h	; в нулевой ячейке держим кол-во чисел в памяти
+    MOV A, #0h
+	MOVC A, @A + DPTR
     MOV R4, A ; кол-во чисел
     LCALL F_DEVIDER ; В R5 среднее значение, в R6 есть ли остаток
 
-	MOV DPL, #70h
-    MOVX A, @DPTR; Q_MIN
+	XCH     A, Q_MIN_ADDR
     MOV R0, A
-    INC DPTR
-    MOVX A, @DPTR; Q_MAX
+    XCH     A, Q_MIN_ADDR
+
+    XCH     A, Q_MAX_ADDR
     MOV R1, A
+    XCH     A, Q_MAX_ADDR
 
     MOV  A, R5
     SUBB A, R1
@@ -347,10 +358,7 @@ LAB1_4:
 
     KEKE:
     MOV		20h, #10h		; кол-во чисел (+1, т.к. DJNZ "упустит" последнее число)
-    MOV		DPH, #0h
-	MOV		DPL, #0h	; в нулевой ячейке держим кол-во чисел в памяти
-    MOV     A, #0h
-	MOVX	@DPTR,A
+    MOV     40h, #0h
 
 	POP	DPL
 	POP	DPH
@@ -435,5 +443,4 @@ F_DEVIDER:
     POP 0 ; R0
     RET
 
-END_STOP:
-    END
+END
