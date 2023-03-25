@@ -12,14 +12,9 @@
 $mod52
 
     ORG 0h ; Начальный адрес программы (если нет прерываний)
-START:
-    MOV DPH, #50h
-    MOV DPL, #51h
-    MOV TH0, #3h
-    MOV TL0, #0A1h
-    MOV TH1, #083h
-    MOV TL1, #77h
 
+OUT_REGS:
+    PUSH 0
     SETB PSW.3
     CLR PSW.4
     MOV R0, #18h   ; Банк 0
@@ -37,6 +32,5 @@ START:
     MOV @R0, TL1
     INC R0
 
-    JMP START
-
-    END
+    POP 0
+    RETI
